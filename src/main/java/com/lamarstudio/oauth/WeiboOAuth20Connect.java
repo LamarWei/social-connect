@@ -17,7 +17,7 @@ public class WeiboOAuth20Connect{
     
     private final String CLIENT_ID=OAuthConfig.getClientID(OAuthSupplier.WEIBO);
     private final String CLIENT_SECRET=OAuthConfig.getClientSecret(OAuthSupplier.WEIBO);
-    private final String CLIENT_REDIRECT_URI=OAuthConfig.getRedirectURI(OAuthSupplier.WEIBO);
+    private final String CLIENT_REDIRECT_URI=OAuthConfig.getRedirectURI();
 
     public String generateOAuthURI(String state) {
         return String.format(GET_CODE_URL, CLIENT_ID, state, CLIENT_REDIRECT_URI);
@@ -29,7 +29,7 @@ public class WeiboOAuth20Connect{
      * @return jsonObject{"access_token": "ACCESS_TOKEN","expires_in": 1234,"remind_in":"798114","uid":"uid"}
      * @throws IOException
      */
-    public JSONObject getAccessToken(String code) throws IOException {
+    private JSONObject getAccessToken(String code) throws IOException {
         return HttpOAuthClient.getJSONObjectByPost(GET_ACCESS_TOKEN_URL, new PostParameter[]{
                 new PostParameter("client_id", CLIENT_ID),
                 new PostParameter("client_secret", CLIENT_SECRET),
@@ -46,7 +46,7 @@ public class WeiboOAuth20Connect{
      * @return
      * @throws IOException
      */
-    public JSONObject getUserObject(String token, String uid) throws IOException {
+    private JSONObject getUserInfo(String token, String uid) throws IOException {
         return HttpOAuthClient.getJSONObjectByGet(GET_USER_URL, token, 
                 new PostParameter[]{new PostParameter("uid", uid)});
     }
@@ -56,10 +56,10 @@ public class WeiboOAuth20Connect{
      * @param code
      * @return
      */
-    public JSONObject getUserInOne(String code){
+    public JSONObject getUserJSONObject(String code){
         try {
             JSONObject json = getAccessToken(code);
-            return getUserObject(json.getString("access_token"), json.getString("uid"));
+            return getUserInfo(json.getString("access_token"), json.getString("uid"));
         } catch (IOException e) {
             e.printStackTrace();
             return null;

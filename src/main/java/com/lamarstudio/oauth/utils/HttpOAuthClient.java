@@ -47,6 +47,15 @@ public class HttpOAuthClient {
     /**
      * get response string by GET
      * @param uri
+     * @return
+     */
+    public static String getStringByGet(String uri,PostParameter[] params) {
+        return getStringByGet(uri, null, params);
+    }
+    
+    /**
+     * get response string by GET
+     * @param uri
      * @param token access_token
      * @param params query parameters
      * @return

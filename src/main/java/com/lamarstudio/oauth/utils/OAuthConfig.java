@@ -59,8 +59,8 @@ public class OAuthConfig {
         return prop.getProperty(Constant.OAUTH_CLIENT_SECRET + oauthSupplier);
     }
 
-    public static String getRedirectURI(String oauthSupplier) {
-        return prop.getProperty(Constant.OAUTH_REDIRECT_URI + oauthSupplier);
+    public static String getRedirectURI() {
+        return prop.getProperty(Constant.OAUTH_REDIRECT_URI);
     }
 
 }

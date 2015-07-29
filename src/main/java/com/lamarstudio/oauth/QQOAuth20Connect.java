@@ -1,18 +1,16 @@
 package com.lamarstudio.oauth;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.lamarstudio.oauth.model.Constant;
 import com.lamarstudio.oauth.model.OAuthSupplier;
+import com.lamarstudio.oauth.model.PostParameter;
 import com.lamarstudio.oauth.utils.HttpOAuthClient;
 import com.lamarstudio.oauth.utils.OAuthConfig;
 
@@ -29,7 +27,7 @@ public class QQOAuth20Connect {
 
     private final String CLIENT_ID = OAuthConfig.getClientID(OAuthSupplier.QQ);
     private final String CLIENT_SECRET = OAuthConfig.getClientSecret(OAuthSupplier.QQ);
-    private final String CLIENT_REDIRECT_URI = OAuthConfig.getRedirectURI(OAuthSupplier.QQ);
+    private final String CLIENT_REDIRECT_URI = OAuthConfig.getRedirectURI();
 
     /**
      * generate OAuth authorization url
@@ -48,9 +46,14 @@ public class QQOAuth20Connect {
      * @param code
      * @return
      */
-    public String getAccesstoken(String code) {
-        String tokenUrl = String.format(GET_TOKEN_BY_CODE_QQ, CLIENT_ID, CLIENT_SECRET, code, CLIENT_REDIRECT_URI);
-        String tokenResult = HttpOAuthClient.getStringByGet(tokenUrl);
+    private String getAccesstoken(String code) {
+        String tokenResult = HttpOAuthClient.getStringByGet(this.GET_TOKEN_BY_CODE_QQ,new PostParameter[]{
+        		new PostParameter("grant_type", "authorization_code"),
+        		new PostParameter("client_id", this.CLIENT_ID),
+        		new PostParameter("client_secret", this.CLIENT_SECRET),
+        		new PostParameter("code", code),
+        		new PostParameter("redirect_uri", this.CLIENT_REDIRECT_URI)
+        });
         Matcher m = Pattern.compile("access_token=(\\w+)").matcher(tokenResult);
         String accesstoken = StringUtils.EMPTY;
         if (m.find()) {
@@ -67,9 +70,9 @@ public class QQOAuth20Connect {
      * @param accesstoken
      * @return
      */
-    public String getUserID(String accesstoken) {
-        String openIDUrl = String.format(GET_OPENID_BY_TOKEN_QQ, accesstoken);
-        String openIDResult = HttpOAuthClient.getStringByGet(openIDUrl);
+    private String getUserID(String accesstoken) {
+        String openIDResult = HttpOAuthClient.getStringByGet(this.GET_OPENID_BY_TOKEN_QQ,new PostParameter[]{
+        		new PostParameter("access_token", accesstoken)});
         if (StringUtils.isNotBlank(openIDResult)) {
             int startIndex = StringUtils.indexOf(openIDResult, '(');
             int endIndex = StringUtils.indexOf(openIDResult, ')');
@@ -89,16 +92,16 @@ public class QQOAuth20Connect {
      * @param userID openid
      * @return user JSONObject
      */
-    public JSONObject getUserInfo(String token, String userID) throws IOException {
-        String url = String.format(USERINFO_URL_PATTERN, token, CLIENT_ID, userID);
+    private JSONObject getUserInfo(String token, String userID) throws IOException {
         String content = null;
-        try {
-            content = IOUtils.toString(new URI(url), "utf-8");
-            JSONObject json = JSON.parseObject(content);
-            return json;
-        } catch (URISyntaxException e) {
-            throw new IOException(e);
-        }
+        content = HttpOAuthClient.getStringByGet(this.USERINFO_URL_PATTERN, new PostParameter[]{
+			new PostParameter("access_token", token),
+			new PostParameter("oauth_consumer_key", this.CLIENT_ID),
+			new PostParameter("openid", userID),
+			new PostParameter("format", "json")
+		});
+		JSONObject json = JSON.parseObject(content);
+		return json;
     }
 
     /**
